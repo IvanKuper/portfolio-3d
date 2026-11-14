@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ivan Kuper | 3D Portfolio</title>
+<meta name="description" content="Ivan Kuper, full-stack developer. Drag to spin the ring of projects and click a card to open the live demo.">
+<meta name="theme-color" content="#070b1a">
+<style>
+:root{--bg:#070b1a;--fg:#e8ecff;--accent:#6ee7ff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Arial,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0;cursor:grab}
+canvas:active{cursor:grabbing}
+header{position:fixed;top:0;left:0;right:0;padding:20px 24px;pointer-events:none;z-index:2}
+h1{margin:0;font-size:clamp(22px,4vw,40px);letter-spacing:.02em}
+h1 span{color:var(--accent)}
+p.sub{margin:6px 0 0;opacity:.75;font-size:clamp(13px,2vw,16px)}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:14px 16px 18px;z-index:2}
+nav a{color:var(--fg);text-decoration:none;font-size:14px;padding:9px 14px;border:1px solid #ffffff33;border-radius:999px;background:#0b1230aa;backdrop-filter:blur(6px)}
+nav a:hover,nav a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+#hint{position:fixed;left:0;right:0;bottom:70px;text-align:center;font-size:13px;opacity:.6;z-index:2;pointer-events:none}
+#fallback{display:none;position:fixed;inset:0;padding:100px 24px;overflow:auto;z-index:3;background:var(--bg)}
+#fallback a{display:block;color:var(--accent);padding:10px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Ivan <span>Kuper</span></h1>
+  <p class="sub">Full-stack developer. Spin the ring, click a card.</p>
+</header>
+<div id="hint">Drag to spin · Click a card to open it</div>
+<nav>
+  <a href="https://github.com/IvanKuper" target="_blank" rel="noopener">GitHub</a>
+  <a href="https://www.linkedin.com/in/ivankuper/" target="_blank" rel="noopener">LinkedIn</a>
+  <a href="https://ivankuper.netlify.app/" target="_blank" rel="noopener">Classic portfolio</a>
+</nav>
+<div id="fallback"><h2>Projects</h2></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const PROJECTS = [
+  {t:"Greece", d:"Business site, live on Render", u:"https://greece-k88x.onrender.com/", c:["#0ea5e9","#1e3a8a"]},
+  {t:"StoRM", d:"Sports gear store (MERN)", u:"https://storm-shop.onrender.com/", c:["#f97316","#7c2d12"]},
+  {t:"BiziK", d:"Business app", u:"https://bizik.netlify.app/", c:["#22c55e","#064e3b"]},
+  {t:"Sushi Lovers", d:"Restaurant website", u:"https://sushilovers.netlify.app/", c:["#f43f5e","#4c0519"]},
+  {t:"Black Jack", d:"Card game", u:"https://blackjack-by-ivan-kuper.netlify.app/", c:["#a855f7","#3b0764"]},
+  {t:"Snake", d:"Arcade game", u:"https://snake-by-ivan-kuper.netlify.app/", c:["#84cc16","#1a2e05"]},
+  {t:"IMDB clone", d:"Movie browser", u:"https://imdb-by-ivan-kuper.netlify.app/", c:["#eab308","#422006"]},
+  {t:"Mardi Gras", d:"Event site", u:"https://mardi-gras-by-ivan-kuper.netlify.app/", c:["#ec4899","#500724"]}
+];
+
+function showFallback(){
+  const f=document.getElementById('fallback'); f.style.display='block';
+  PROJECTS.forEach(p=>{const a=document.createElement('a');a.href=p.u;a.target='_blank';a.rel='noopener';a.textContent=p.t+' - '+p.d;f.appendChild(a)});
+}
+
+(function(){
+  if(typeof THREE==='undefined'){showFallback();return}
+  let renderer;
+  try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false})}catch(e){showFallback();return}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  document.body.appendChild(renderer.domElement);
+
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b1a); scene.fog=new THREE.Fog(0x070b1a,10,32);
+  const camera=new THREE.PerspectiveCamera(55,1,.1,100);
+  const ring=new THREE.Group(); scene.add(ring);
+  const N=PROJECTS.length, R=6.2;
+
+  function card(p){
+    const cv=document.createElement('canvas'); cv.width=512; cv.height=320;
+    const g=cv.getContext('2d'), gr=g.createLinearGradient(0,0,512,320);
+    gr.addColorStop(0,p.c[0]); gr.addColorStop(1,p.c[1]);
+    g.fillStyle=gr; g.fillRect(0,0,512,320);
+    g.fillStyle='rgba(255,255,255,.12)'; g.beginPath(); g.arc(430,70,120,0,7); g.fill();
+    g.fillStyle='#fff'; g.font='700 52px system-ui,Arial'; g.fillText(p.t,32,170);
+    g.font='400 26px system-ui,Arial'; g.globalAlpha=.85; g.fillText(p.d,32,215);
+    g.font='600 22px system-ui,Arial'; g.fillText('Open demo  →',32,285);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),side:THREE.DoubleSide}));
+    return m;
+  }
+  const cards=PROJECTS.map((p,i)=>{
+    const m=card(p), a=i/N*Math.PI*2;
+    m.position.set(Math.sin(a)*R,Math.sin(i*1.7)*.35,Math.cos(a)*R);
+    m.lookAt(0,m.position.y,0); m.rotateY(Math.PI);
+    m.userData={u:p.u}; ring.add(m); return m;
+  });
+
+  // starfield
+  const pts=new Float32Array(1800*3); for(let i=0;i<pts.length;i++)pts[i]=(Math.random()-.5)*60;
+  const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(pts,3));
+  const stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0x9bb7ff,size:.06})); scene.add(stars);
+  // glowing core
+  const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.1,1),new THREE.MeshBasicMaterial({color:0x6ee7ff,wireframe:true}));
+  scene.add(core);
+
+  function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();
+    camera.position.set(0,1.6,w<700?15:11.5);camera.lookAt(0,0,0)}
+  addEventListener('resize',resize); resize();
+
+  // drag to spin with inertia
+  let vel=.004,drag=false,lx=0,moved=0,mx=0,my=0;
+  const el=renderer.domElement;
+  el.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;moved=0;el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{
+    mx=e.clientX/innerWidth-.5; my=e.clientY/innerHeight-.5;
+    if(drag){const dx=e.clientX-lx;lx=e.clientX;moved+=Math.abs(dx);vel=dx*.006;ring.rotation.y+=dx*.006}
+    hover(e);
+  });
+  const ray=new THREE.Raycaster(), v2=new THREE.Vector2();
+  function pick(e){v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(v2,camera);return ray.intersectObjects(cards)[0]}
+  function hover(e){if(!drag)el.style.cursor=pick(e)?'pointer':'grab'}
+  el.addEventListener('pointerup',e=>{drag=false;if(moved<6){const h=pick(e);if(h)window.open(h.object.userData.u,'_blank','noopener')}});
+
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  (function loop(){
+    requestAnimationFrame(loop);
+    if(!drag){ring.rotation.y+=vel; vel+=((reduce?0:.004)-vel)*.02}
+    core.rotation.x+=.004; core.rotation.y+=.006; stars.rotation.y+=.0004;
+    camera.position.x+=((mx*3)-camera.position.x)*.05; camera.position.y+=((1.6-my*2)-camera.position.y)*.05;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  })();
+})();
+</script>
+</body>
+</html>
