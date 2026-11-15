@@ -2,85 +2,131 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ivan Kuper | 3D Portfolio</title>
-<meta name="description" content="Ivan Kuper, full-stack developer. Drag to spin the ring of projects and click a card to open the live demo.">
+<meta name="description" content="Ivan Kuper, full-stack developer. Spin the ring of projects and open any live demo.">
 <meta name="theme-color" content="#070b1a">
+<link rel="canonical" href="https://ivankuper.github.io/portfolio-3d/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ivan Kuper | 3D Portfolio">
+<meta property="og:description" content="Full-stack developer. Spin the ring of projects and open any live demo.">
+<meta property="og:url" content="https://ivankuper.github.io/portfolio-3d/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070b1a'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='16' text-anchor='middle' fill='%236ee7ff'%3EIK%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <style>
 :root{--bg:#070b1a;--fg:#e8ecff;--accent:#6ee7ff}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Arial,sans-serif;overflow:hidden}
-canvas{display:block;position:fixed;inset:0;cursor:grab}
+html,body{margin:0;height:100%;background:radial-gradient(ellipse at 50% 60%,#131c44 0,var(--bg) 65%);color:var(--fg);font-family:system-ui,Segoe UI,Arial,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0;cursor:grab;touch-action:none}
 canvas:active{cursor:grabbing}
-header{position:fixed;top:0;left:0;right:0;padding:20px 24px;pointer-events:none;z-index:2}
+header{position:fixed;top:0;left:0;right:0;padding:max(20px,env(safe-area-inset-top)) 24px 0;pointer-events:none;z-index:2}
 h1{margin:0;font-size:clamp(22px,4vw,40px);letter-spacing:.02em}
 h1 span{color:var(--accent)}
-p.sub{margin:6px 0 0;opacity:.75;font-size:clamp(13px,2vw,16px)}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:14px 16px 18px;z-index:2}
-nav a{color:var(--fg);text-decoration:none;font-size:14px;padding:9px 14px;border:1px solid #ffffff33;border-radius:999px;background:#0b1230aa;backdrop-filter:blur(6px)}
-nav a:hover,nav a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
-#hint{position:fixed;left:0;right:0;bottom:70px;text-align:center;font-size:13px;opacity:.6;z-index:2;pointer-events:none}
-#fallback{display:none;position:fixed;inset:0;padding:100px 24px;overflow:auto;z-index:3;background:var(--bg)}
-#fallback a{display:block;color:var(--accent);padding:10px 0}
+p.sub{margin:6px 0 0;opacity:.8;font-size:clamp(13px,2vw,16px)}
+footer{position:fixed;bottom:0;left:0;right:0;padding:0 16px max(18px,env(safe-area-inset-bottom));z-index:2;pointer-events:none}
+#hint{margin:0 0 10px;text-align:center;font-size:13px;opacity:.7}
+nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+nav a,nav button,dialog button{pointer-events:auto;font:inherit;cursor:pointer;color:var(--fg);text-decoration:none;font-size:14px;min-height:44px;display:inline-flex;align-items:center;padding:9px 16px;border:1px solid #ffffff44;border-radius:999px;background:#0b1230cc;backdrop-filter:blur(6px)}
+nav button{border-color:var(--accent);color:var(--accent)}
+a:hover,button:hover{border-color:var(--accent);color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+dialog{color:var(--fg);background:#0b1230;border:1px solid #ffffff33;border-radius:18px;padding:22px;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;z-index:3}
+dialog:not(:modal){margin-top:110px}
+dialog::backdrop{background:#070b1acc;backdrop-filter:blur(4px)}
+dialog h2{margin:0 0 6px;font-size:22px}
+dialog ul{list-style:none;margin:0 0 14px;padding:0}
+dialog li a{display:block;color:var(--fg);text-decoration:none;padding:11px 8px;border-bottom:1px solid #ffffff1f;border-radius:6px}
+dialog li a b{color:var(--accent);margin-right:8px}
+dialog li a span{opacity:.8;font-size:14px}
 </style>
 </head>
 <body>
 <header>
   <h1>Ivan <span>Kuper</span></h1>
-  <p class="sub">Full-stack developer. Spin the ring, click a card.</p>
+  <p class="sub">Full-stack developer. Spin the ring, open a live demo.</p>
 </header>
-<div id="hint">Drag to spin · Click a card to open it</div>
-<nav>
-  <a href="https://github.com/IvanKuper" target="_blank" rel="noopener">GitHub</a>
-  <a href="https://www.linkedin.com/in/ivankuper/" target="_blank" rel="noopener">LinkedIn</a>
-  <a href="https://ivankuper.netlify.app/" target="_blank" rel="noopener">Classic portfolio</a>
-</nav>
-<div id="fallback"><h2>Projects</h2></div>
+
+<!-- The one list of projects: readable without JavaScript or WebGL, and the 3D cards are built from it. -->
+<dialog id="list" open aria-labelledby="list-title">
+  <h2 id="list-title">Projects</h2>
+  <ul>
+    <li><a href="https://greece-k88x.onrender.com/" target="_blank" rel="noopener" data-c="#0ea5e9,#1e3a8a" data-k="Node · Express · SQLite"><b>Greece</b><span>Business site with CRM workspace</span></a></li>
+    <li><a href="https://storm-shop.onrender.com/" target="_blank" rel="noopener" data-c="#f97316,#7c2d12" data-k="React · Redux · Express · MongoDB"><b>StoRM</b><span>Online sports store with cart</span></a></li>
+    <li><a href="https://bizik.netlify.app/" target="_blank" rel="noopener" data-c="#22c55e,#064e3b" data-k="React · TypeScript · MongoDB"><b>BiziK</b><span>Digital business cards</span></a></li>
+    <li><a href="https://sushilovers.netlify.app/" target="_blank" rel="noopener" data-c="#f43f5e,#4c0519" data-k="React · TypeScript · Supabase"><b>Sushi Lovers</b><span>Restaurant ordering website</span></a></li>
+    <li><a href="https://blackjack-by-ivan-kuper.netlify.app/" target="_blank" rel="noopener" data-c="#a855f7,#3b0764" data-k="JavaScript"><b>Black Jack</b><span>Card game in the browser</span></a></li>
+    <li><a href="https://snake-by-ivan-kuper.netlify.app/" target="_blank" rel="noopener" data-c="#84cc16,#1a2e05" data-k="JavaScript"><b>Snake</b><span>Classic arcade game</span></a></li>
+    <li><a href="https://tictactoe-by-ivan-kuper.netlify.app/" target="_blank" rel="noopener" data-c="#14b8a6,#042f2e" data-k="JavaScript"><b>Tic Tac Toe</b><span>Two-player board game</span></a></li>
+    <li><a href="https://imdb-by-ivan-kuper.netlify.app/" target="_blank" rel="noopener" data-c="#eab308,#422006" data-k="JavaScript · TVmaze API"><b>TV Show Search</b><span>Find any show in seconds</span></a></li>
+    <li><a href="https://mardi-gras-by-ivan-kuper.netlify.app/" target="_blank" rel="noopener" data-c="#ec4899,#500724" data-k="HTML · CSS · JavaScript"><b>Mardi Gras</b><span>Multi-page event website</span></a></li>
+  </ul>
+  <form method="dialog"><button hidden id="close">Close</button></form>
+</dialog>
+
+<footer>
+  <p id="hint" hidden>Drag or use ← → to spin · Click a card to open it</p>
+  <nav>
+    <button id="open" hidden type="button">All projects</button>
+    <a href="https://github.com/IvanKuper" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/ivankuper/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://ivankuper.netlify.app/" target="_blank" rel="noopener">Classic portfolio</a>
+  </nav>
+</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const PROJECTS = [
-  {t:"Greece", d:"Business site, live on Render", u:"https://greece-k88x.onrender.com/", c:["#0ea5e9","#1e3a8a"]},
-  {t:"StoRM", d:"Sports gear store (MERN)", u:"https://storm-shop.onrender.com/", c:["#f97316","#7c2d12"]},
-  {t:"BiziK", d:"Business app", u:"https://bizik.netlify.app/", c:["#22c55e","#064e3b"]},
-  {t:"Sushi Lovers", d:"Restaurant website", u:"https://sushilovers.netlify.app/", c:["#f43f5e","#4c0519"]},
-  {t:"Black Jack", d:"Card game", u:"https://blackjack-by-ivan-kuper.netlify.app/", c:["#a855f7","#3b0764"]},
-  {t:"Snake", d:"Arcade game", u:"https://snake-by-ivan-kuper.netlify.app/", c:["#84cc16","#1a2e05"]},
-  {t:"IMDB clone", d:"Movie browser", u:"https://imdb-by-ivan-kuper.netlify.app/", c:["#eab308","#422006"]},
-  {t:"Mardi Gras", d:"Event site", u:"https://mardi-gras-by-ivan-kuper.netlify.app/", c:["#ec4899","#500724"]}
-];
-
-function showFallback(){
-  const f=document.getElementById('fallback'); f.style.display='block';
-  PROJECTS.forEach(p=>{const a=document.createElement('a');a.href=p.u;a.target='_blank';a.rel='noopener';a.textContent=p.t+' - '+p.d;f.appendChild(a)});
-}
-
 (function(){
-  if(typeof THREE==='undefined'){showFallback();return}
-  let renderer;
-  try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false})}catch(e){showFallback();return}
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  document.body.appendChild(renderer.domElement);
+  const dlg=document.getElementById('list');
+  const PROJECTS=[...dlg.querySelectorAll('li a')].map(a=>({t:a.querySelector('b').textContent,d:a.querySelector('span').textContent,u:a.href,c:a.dataset.c.split(','),k:a.dataset.k}));
 
-  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b1a); scene.fog=new THREE.Fog(0x070b1a,10,32);
+  // No three.js or no WebGL: the open list above stays as the page.
+  if(typeof THREE==='undefined')return;
+  let renderer;
+  try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})}catch(e){return}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const el=renderer.domElement;
+  el.setAttribute('role','img');
+  el.setAttribute('aria-label','Spinning ring of project cards. The All projects button lists the same projects as links.');
+  document.body.prepend(el);
+
+  // 3D works: the list becomes a pop-up behind the "All projects" button.
+  dlg.close();
+  for(const id of ['open','close','hint'])document.getElementById(id).hidden=false;
+  document.getElementById('open').onclick=()=>dlg.showModal();
+  dlg.onclick=e=>{if(e.target===dlg)dlg.close()};
+
+  const scene=new THREE.Scene(); scene.fog=new THREE.Fog(0x070b1a,10,30);
   const camera=new THREE.PerspectiveCamera(55,1,.1,100);
   const ring=new THREE.Group(); scene.add(ring);
-  const N=PROJECTS.length, R=6.2;
+  const N=PROJECTS.length, R=6.6, W=1024, H=640;
+  const aniso=renderer.capabilities.getMaxAnisotropy();
 
-  function card(p){
-    const cv=document.createElement('canvas'); cv.width=512; cv.height=320;
-    const g=cv.getContext('2d'), gr=g.createLinearGradient(0,0,512,320);
-    gr.addColorStop(0,p.c[0]); gr.addColorStop(1,p.c[1]);
-    g.fillStyle=gr; g.fillRect(0,0,512,320);
-    g.fillStyle='rgba(255,255,255,.12)'; g.beginPath(); g.arc(430,70,120,0,7); g.fill();
-    g.fillStyle='#fff'; g.font='700 52px system-ui,Arial'; g.fillText(p.t,32,170);
-    g.font='400 26px system-ui,Arial'; g.globalAlpha=.85; g.fillText(p.d,32,215);
-    g.font='600 22px system-ui,Arial'; g.fillText('Open demo  →',32,285);
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),side:THREE.DoubleSide}));
-    return m;
+  function rounded(g){g.beginPath();g.moveTo(56,0);g.arcTo(W,0,W,H,56);g.arcTo(W,H,0,H,56);g.arcTo(0,H,0,0,56);g.arcTo(0,0,W,0,56);g.closePath()}
+  function texture(draw){
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const g=cv.getContext('2d'); rounded(g); g.clip(); draw(g);
+    const t=new THREE.CanvasTexture(cv); t.anisotropy=aniso; return t;
   }
+  const geo=new THREE.PlaneGeometry(3.2,2);
+  // alphaTest cuts the rounded corners without the sorting problems of see-through cards
+  const backMat=new THREE.MeshBasicMaterial({alphaTest:.5,map:texture(g=>{
+    g.fillStyle='#0d1538'; g.fillRect(0,0,W,H);
+    g.strokeStyle='#6ee7ff55'; g.lineWidth=10; rounded(g); g.stroke();
+  })});
   const cards=PROJECTS.map((p,i)=>{
-    const m=card(p), a=i/N*Math.PI*2;
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({alphaTest:.5,map:texture(g=>{
+      const gr=g.createLinearGradient(0,0,W,H); gr.addColorStop(0,p.c[0]); gr.addColorStop(1,p.c[1]);
+      g.fillStyle=gr; g.fillRect(0,0,W,H);
+      g.fillStyle='rgba(255,255,255,.12)'; g.beginPath(); g.arc(860,140,240,0,7); g.fill();
+      g.fillStyle='#fff';
+      g.font='700 40px system-ui,Arial'; g.globalAlpha=.7; g.fillText(String(i+1).padStart(2,'0'),64,100);
+      g.globalAlpha=1; g.font='700 100px system-ui,Arial'; g.fillText(p.t,64,330,W-128);
+      g.font='400 46px system-ui,Arial'; g.globalAlpha=.92; g.fillText(p.d,64,410,W-128);
+      g.font='400 34px system-ui,Arial'; g.globalAlpha=.8; g.fillText(p.k,64,470,W-128);
+      g.globalAlpha=1; g.font='600 42px system-ui,Arial'; g.fillText('Open demo  →',64,570);
+    })}));
+    const back=new THREE.Mesh(geo,backMat); back.rotation.y=Math.PI; m.add(back);
+    const a=i/N*Math.PI*2;
     m.position.set(Math.sin(a)*R,Math.sin(i*1.7)*.35,Math.cos(a)*R);
     m.lookAt(0,m.position.y,0); m.rotateY(Math.PI);
     m.userData={u:p.u}; ring.add(m); return m;
@@ -94,30 +140,36 @@ function showFallback(){
   const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.1,1),new THREE.MeshBasicMaterial({color:0x6ee7ff,wireframe:true}));
   scene.add(core);
 
+  let camZ=11.5;
   function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();
-    camera.position.set(0,1.6,w<700?15:11.5);camera.lookAt(0,0,0)}
+    // narrow screens: pull back just enough that the front card fits the width
+    camZ=Math.max(11.5,R+2/(Math.tan(camera.fov*Math.PI/360)*camera.aspect));camera.position.z=camZ}
   addEventListener('resize',resize); resize();
 
   // drag to spin with inertia
-  let vel=.004,drag=false,lx=0,moved=0,mx=0,my=0;
-  const el=renderer.domElement;
+  let vel=.004,drag=false,lx=0,moved=0,mx=0,my=0,hot=null;
   el.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;moved=0;el.setPointerCapture(e.pointerId)});
   el.addEventListener('pointermove',e=>{
     mx=e.clientX/innerWidth-.5; my=e.clientY/innerHeight-.5;
     if(drag){const dx=e.clientX-lx;lx=e.clientX;moved+=Math.abs(dx);vel=dx*.006;ring.rotation.y+=dx*.006}
-    hover(e);
+    else{const h=pick(e);hot=h&&h.object;el.style.cursor=hot?'pointer':'grab'}
   });
+  el.addEventListener('pointerleave',()=>{hot=null});
   const ray=new THREE.Raycaster(), v2=new THREE.Vector2();
-  function pick(e){v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(v2,camera);return ray.intersectObjects(cards)[0]}
-  function hover(e){if(!drag)el.style.cursor=pick(e)?'pointer':'grab'}
+  // only card fronts are clickable: the backs are children (not searched) and far cards face away
+  function pick(e){v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(v2,camera);return ray.intersectObjects(cards,false)[0]}
   el.addEventListener('pointerup',e=>{drag=false;if(moved<6){const h=pick(e);if(h)window.open(h.object.userData.u,'_blank','noopener')}});
+  el.addEventListener('pointercancel',()=>{drag=false});
+  addEventListener('keydown',e=>{if(dlg.open)return;if(e.key==='ArrowLeft')vel=-.09;if(e.key==='ArrowRight')vel=.09});
 
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   (function loop(){
     requestAnimationFrame(loop);
-    if(!drag){ring.rotation.y+=vel; vel+=((reduce?0:.004)-vel)*.02}
-    core.rotation.x+=.004; core.rotation.y+=.006; stars.rotation.y+=.0004;
-    camera.position.x+=((mx*3)-camera.position.x)*.05; camera.position.y+=((1.6-my*2)-camera.position.y)*.05;
+    if(!drag){ring.rotation.y+=vel; vel+=((reduce?0:.004)-vel)*.03}
+    for(const c of cards){const s=c===hot?1.08:1;c.scale.x=c.scale.y+=(s-c.scale.y)*.15}
+    if(!reduce){core.rotation.x+=.004; core.rotation.y+=.006; stars.rotation.y+=.0004;
+      camera.position.x+=((mx*3)-camera.position.x)*.05; camera.position.y+=((1.6-my*2)-camera.position.y)*.05}
+    else camera.position.y=1.6;
     camera.lookAt(0,0,0);
     renderer.render(scene,camera);
   })();
