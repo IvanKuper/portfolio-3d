@@ -15,7 +15,9 @@
 <meta property="og:image:alt" content="A ring of project cards floating in space">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070b1a'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='16' text-anchor='middle' fill='%236ee7ff'%3EIK%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; img-src data:; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <style>
 :root{--bg:#070b1a;--fg:#e8ecff;--accent:#6ee7ff}
 *{box-sizing:border-box}
@@ -76,17 +78,18 @@ dialog li a span{opacity:.8;font-size:14px}
   </nav>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous" defer></script>
 <script>
-(function(){
+// three.js is deferred, so the page text paints first; start the 3D once it has loaded
+addEventListener("DOMContentLoaded",function(){
   const dlg=document.getElementById('list');
   const PROJECTS=[...dlg.querySelectorAll('li a')].map(a=>({t:a.querySelector('b').textContent,d:a.querySelector('span').textContent,u:a.href,c:a.dataset.c.split(','),k:a.dataset.k}));
 
   // No three.js or no WebGL: the open list above stays as the page.
   if(typeof THREE==='undefined')return;
   let renderer;
-  try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})}catch(e){return}
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  try{renderer=new THREE.WebGLRenderer({antialias:devicePixelRatio<2,alpha:true})}catch(e){return}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
   const el=renderer.domElement;
   el.setAttribute('role','img');
   el.setAttribute('aria-label','Spinning ring of project cards. The All projects button lists the same projects as links.');
@@ -176,7 +179,7 @@ dialog li a span{opacity:.8;font-size:14px}
     camera.lookAt(0,0,0);
     renderer.render(scene,camera);
   })();
-})();
+});
 </script>
 </body>
 </html>
